@@ -1,5 +1,3 @@
-
-
 /*
   Nano33BLESensorExample_magnetic.ino
   Copyright (c) 2020 Dale Giancono. All rights reserved..
@@ -20,6 +18,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+/*
+    Magnetometers 
+    Magnetometers measure a magnetic field such as the Earth's magnetic field. 
+    They can be packaged in combination with an accelerometer to allow tilt 
+    compensation in the application. Devices integrating both, a magnetometer 
+    and an accelerometer in one package are called e-Compasses. The output of 
+    ST's magnetometers corresponds to [gauss] (usually abbreviated as [G] or [Gs]. 
+    1 [G] = 100 [µT]
+*/
+
+/* Required Libraries
+    Arduino_LSM9DS1
+    Nano33BLESensor
+*/
+
+/* ST IMU LSM9DS1
+    data sheet - https://content.arduino.cc/assets/Nano_BLE_Sense_lsm9ds1.pdf
+        3D Magnetic Sensor
+        +-2/+-4/+-8/+-16 gauss magnetic full scale
+        Sensitivity
+            +-2 gauss   0.14 mgauss/LSB
+          * +-4 gauss   0.29 mgauss/LSB
+            +-8 gauss   0.43 mgauss/LSB
+           +-16 gauss   0.58 mgauss/LSB
+
+          * configured setting
+*/
+
 /*****************************************************************************/
 /*INCLUDES                                                                   */
 /*****************************************************************************/
@@ -101,15 +128,15 @@ void setup()
 
         BLE.addService(BLEMagnetic);
         BLE.advertise();
+
         /* 
          * Initialises the IMU sensor, and starts the periodic reading of the 
          * sensor using a Mbed OS thread. The data is placed in a circular 
          * buffer and can be read whenever.
          */
         Magnetic.begin();
+
         /* Plots the legend on Serial Plotter */
-        Serial.println("--- Starting BLE magnetic Example ---");
-        Serial.println();
         Serial.println("X, Y, Z");
     }
 }
@@ -123,7 +150,7 @@ void loop()
 
     // jls - only use serial output, ignore BLE
     
-    //if(central)
+    //jls orig - if(central)
     if(true)
     {
         int writeLength;
@@ -133,7 +160,7 @@ void loop()
          * data will also be output through serial so it can be plotted using 
          * Serial Plotter. 
          */
-        // while(central.connected())
+        //jls orig - while(central.connected())
         while(true)
         {            
             if(Magnetic.pop(magneticData))
@@ -143,17 +170,30 @@ void loop()
                  * which is stored in bleBuffer. This string is then written to 
                  * the BLE characteristic. 
                  */
-                writeLength = sprintf(bleBuffer, "%f", magneticData.x);
+
+                /*
+                  jls - scale magnetic data
+                  Note- scaling appears wrong in LSM9DS1.cpp library
+                  Display data in mg
+                */ 
+                magneticData.x *= 10.0;
+                magneticData.y *= 10.0;
+                magneticData.z *= 10.0;
+
+                // set reading output to match magnetometer percision - Max 4.000 Min 0.00012
+
+                writeLength = sprintf(bleBuffer, "%4.3f", magneticData.x);
                 magneticXBLE.writeValue(bleBuffer, writeLength); 
-                writeLength = sprintf(bleBuffer, "%f", magneticData.y);
+                writeLength = sprintf(bleBuffer, "%4.3f", magneticData.y);
                 magneticYBLE.writeValue(bleBuffer, writeLength);      
-                writeLength = sprintf(bleBuffer, "%f", magneticData.z);
+                writeLength = sprintf(bleBuffer, "%4.3f", magneticData.z);
                 magneticZBLE.writeValue(bleBuffer, writeLength);      
 
-                Serial.printf("%f,%f,%f\r\n", magneticData.x, magneticData.y, magneticData.z);
+                Serial.printf("%4.3f,%4.3f,%4.3f\r\n", magneticData.x, magneticData.y, magneticData.z);
             }
 
-            delay(1000);   // print output every second
+            //jls - added 
+            //delay(1000);   // print output every second
         }
     }
 }

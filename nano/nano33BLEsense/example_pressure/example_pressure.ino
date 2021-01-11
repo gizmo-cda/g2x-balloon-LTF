@@ -18,6 +18,14 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+/*
+    Atmospheric pressure sensors Pressure sensors measure absolute ambient 
+    pressure (as a barometer). They are commonly used for indoor navigation 
+    (and all possible user altitudes) or weather monitoring. The output of 
+    ST's pressure sensors corresponds to [hPa]. 1 [hPa] = 1 [mbar] ~ 0.0145 [psi]
+*/
+
 /*****************************************************************************/
 /*INCLUDES                                                                   */
 /*****************************************************************************/

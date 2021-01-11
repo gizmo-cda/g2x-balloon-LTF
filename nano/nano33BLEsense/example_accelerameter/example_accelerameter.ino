@@ -18,6 +18,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+/*
+    Accelerometers 
+    Accelerometers measure linear acceleration. ST's MEMS accelerometers 
+    embed several useful features for motion and acceleration detection 
+    including free-fall, wakeup, single/double-tap recognition, activity/inactivity 
+    detection and 6D/4D orientation. They can be also used to measure inclination 
+    or vibration. The output of ST's MEMS accelerometers corresponds to [g], 
+    where 1 g is equal to 9.80665 m/s2 (standard gravity).
+*/
+
+/* Required Libraries
+    Arduino_LSM9DS1
+    Nano33BLESensor
+*/
+
+/* ST IMU LSM9DS1
+    data sheet - https://content.arduino.cc/assets/Nano_BLE_Sense_lsm9ds1.pdf
+        3D Accelerometer
+        ±2/±4/±8/±16 g linear acceleration full scale
+        Sensitivity
+            +-2 g   0.061 mg    mg - 9.8 X 10-3 m/s*s
+          * +-4 g   0.122 mg
+            +-8 g   0.244 mg
+           +-16 g   0.732 mg
+
+          * default setting
+*/
+
 /*****************************************************************************/
 /*INCLUDES                                                                   */
 /*****************************************************************************/
@@ -104,9 +133,11 @@ void setup()
          * buffer and can be read whenever.
          */
         Accelerometer.begin();
+        //jls - added
+        //Serial.println("--- Starting Accelerometer Example ---");
+        //Serial.println("");
+
         /* Plots the legend on Serial Plotter */
-        Serial.println("--- Starting Accelerometer Example ---");
-        Serial.println("");
         Serial.println("X, Y, Z");
     }
 }
@@ -126,22 +157,21 @@ void loop()
      * This modified example ignores BLE and reports the readings over 
      * the serial port.
      */
-    // jls - use serial port only, ignore BLE
      
-    // if(central)
-    if (1)
+    // jls - orig: if(central)
+    if (true)
     {
-        // int writeLength;
+        int writeLength;
+
         /* 
          * If a BLE device is connected, accelerometer data will start being read, 
          * and the data will be written to each BLE characteristic. The same 
          * data will also be output through serial so it can be plotted using 
          * Serial Plotter. 
          */
-
        
-        // while(central.connected())
-        while(1)
+        // jls - orig: while(central.connected())
+        while(true)
         {            
             if(Accelerometer.pop(accelerometerData))
             {
@@ -150,18 +180,23 @@ void loop()
                  * which is stored in bleBuffer. This string is then written to 
                  * the BLE characteristic. 
                  */
-                 
-                /* 
-                 * writeLength = sprintf(bleBuffer, "%f", accelerometerData.x);
-                 * accelerometerXBLE.writeValue(bleBuffer, writeLength); 
-                 * writeLength = sprintf(bleBuffer, "%f", accelerometerData.y);
-                 * accelerometerYBLE.writeValue(bleBuffer, writeLength);      
-                 * writeLength = sprintf(bleBuffer, "%f", accelerometerData.z);
-                 * accelerometerZBLE.writeValue(bleBuffer, writeLength);      
-                */
+
+                // scale output to mg - +- 4000 mg full scale
+                accelerometerData.x *= 1000.0;
+                accelerometerData.y *= 1000.0;
+                accelerometerData.z *= 1000.0;
+
+                writeLength = sprintf(bleBuffer, "%4.3f", accelerometerData.x);
+                accelerometerXBLE.writeValue(bleBuffer, writeLength); 
+                writeLength = sprintf(bleBuffer, "%4.3f", accelerometerData.y);
+                accelerometerYBLE.writeValue(bleBuffer, writeLength);      
+                writeLength = sprintf(bleBuffer, "%4.3f", accelerometerData.z);
+                accelerometerZBLE.writeValue(bleBuffer, writeLength);      
   
-                Serial.printf("%f,%f,%f\r\n", accelerometerData.x, accelerometerData.y, accelerometerData.z);
-                delay(1000);
+                Serial.printf("%4.3f,%4.3f,%4.3f\r\n", accelerometerData.x, accelerometerData.y, accelerometerData.z);
+
+                //jls - added 
+                // delay(1000);
             }
         }
     }
