@@ -18,6 +18,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+/*
+    Gyroscopes 
+    Gyroscopes measure angular rate. They are usually combined with 
+    an accelerometer in a common package to allow advanced algorithms 
+    like sensor fusion (for orientation estimation in 3D space). 
+    In this case we call them iNEMO (Inertial Modules) or more generally 
+    IMU (Inertial Measurement Unit, which can also contain a magnetometer). 
+    The output of ST's MEMS gyroscopes corresponds to [dps] (degrees per second). 
+    1 [dps] = -- [rad/s]  rad = 180*pi
+*/
+
+/* Required Libraries
+    Arduino_LSM9DS1
+    Nano33BLESensor
+*/
+
+/* ST IMU LSM9DS1
+    data sheet - https://content.arduino.cc/assets/Nano_BLE_Sense_lsm9ds1.pdf
+        3D Gyroscope Sensor
+        Sensitivity
+            +-245 dps    8.75 mdps/LSB      mdps - mili degrees/sec
+            +-500 dps   17.50 mdps/LSB
+          * +-2000 dps  70.0 mdps/LSB
+
+           *configured setting
+*/
+
 /*****************************************************************************/
 /*INCLUDES                                                                   */
 /*****************************************************************************/
@@ -104,9 +132,12 @@ void setup()
          * buffer and can be read whenever.
          */
         Gyroscope.begin();
+
+        //jls - added
+        //Serial.println("--- Starting Accelerometer Example ---");
+        //Serial.println();
+
         /* Plots the legend on Serial Plotter */
-        Serial.println("--- Starting Accelerometer Example ---");
-        Serial.println();
         Serial.println("X, Y, Z");
     }
 }
@@ -120,7 +151,7 @@ void loop()
 
     // jls - use serial port only, ignore BLE
     
-    //if(central)
+    //jls orig - if(central)
     if(true)
     {
         int writeLength;
@@ -130,7 +161,7 @@ void loop()
          * data will also be output through serial so it can be plotted using 
          * Serial Plotter. 
          */
-        // jls while(central.connected())
+        // jls orig - while(central.connected())
         while(true)
         {            
             if(Gyroscope.pop(gyroscopeData))
@@ -140,16 +171,20 @@ void loop()
                  * which is stored in bleBuffer. This string is then written to 
                  * the BLE characteristic. 
                  */
-                writeLength = sprintf(bleBuffer, "%f", gyroscopeData.x);
+
+                // set reading output to match gyroscope percision - Max 2000.00 Min 0.061
+
+                writeLength = sprintf(bleBuffer, "%4.3f", gyroscopeData.x);
                 gyroscopeXBLE.writeValue(bleBuffer, writeLength); 
-                writeLength = sprintf(bleBuffer, "%f", gyroscopeData.y);
+                writeLength = sprintf(bleBuffer, "%4.3f", gyroscopeData.y);
                 gyroscopeYBLE.writeValue(bleBuffer, writeLength);      
-                writeLength = sprintf(bleBuffer, "%f", gyroscopeData.z);
+                writeLength = sprintf(bleBuffer, "%4.3f", gyroscopeData.z);
                 gyroscopeZBLE.writeValue(bleBuffer, writeLength);      
 
-                Serial.printf("%f,%f,%f\r\n", gyroscopeData.x, gyroscopeData.y, gyroscopeData.z);
+                Serial.printf("%4.3f,%4.3f,%4.3f\r\n", gyroscopeData.x, gyroscopeData.y, gyroscopeData.z);
             }
-            delay(1000);  // print once per second
+            // jls - added
+            // delay(1000);  // print once per second
         }
     }
 }
